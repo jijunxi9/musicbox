@@ -1,4 +1,4 @@
-const CACHE = 'mbx-shell-v3';
+const CACHE = 'mbx-shell-v4';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './songs.json', './icon-180.png', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {

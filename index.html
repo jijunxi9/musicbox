@@ -149,6 +149,14 @@ main::-webkit-scrollbar{width:0}
 #toast{position:fixed;left:50%;bottom:88px;transform:translate(-50%,20px);background:#25253a;border:1px solid var(--line);
   color:#eef;padding:9px 16px;border-radius:12px;font-size:13px;z-index:60;opacity:0;transition:.22s;pointer-events:none;max-width:86vw;text-align:center}
 #toast.on{opacity:1;transform:translate(-50%,0)}
+#a2hs{position:fixed;left:14px;right:14px;bottom:calc(var(--safeB) + 20px);z-index:30;display:flex;align-items:center;gap:12px;
+  background:#1b1b2cf0;border:1px solid var(--line);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-radius:18px;padding:14px 16px;font-size:13px;line-height:1.55;box-shadow:0 18px 40px #0008;
+  transition:opacity .3s,transform .3s}
+#a2hs.hide{opacity:0;transform:translateY(20px);pointer-events:none}
+#a2hs .a2txt span{color:var(--dim);font-size:12px}
+#a2hs b{color:var(--acc)}
+#a2hs button{flex:0 0 auto;background:#ffffff14;border:0;color:#cfcbe0;padding:9px 13px;border-radius:12px;font-size:12px}
 #srch{position:fixed;inset:0;z-index:30;background:#0a0a12f7;padding:calc(var(--safeT) + 12px) 16px;display:none;flex-direction:column}
 #srch.on{display:flex}
 #srch input{width:100%;background:var(--card);border:1px solid var(--line);border-radius:13px;padding:12px 14px;color:#fff;font-size:15px;outline:none}
@@ -168,6 +176,11 @@ main::-webkit-scrollbar{width:0}
     </div>
   </header>
   <main id="list"></main>
+</div>
+
+<div id="a2hs" class="hide">
+  <div class="a2txt">加到主屏幕，就能像 App 一样全屏播放<br><span>点底部 <b>分享</b> 图标 → 添加到主屏幕</span></div>
+  <button id="a2close">知道了</button>
 </div>
 
 <div id="bar" class="gone">
@@ -618,6 +631,19 @@ async function boot(){
 }
 paintControls();
 boot();
+// iOS「添加到主屏幕」提示：仅 iOS Safari 非独立模式、且没关过时出现一次
+function maybeA2hs(){
+  const ua=navigator.userAgent;
+  const ios=/iPad|iPhone|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  const safari=/Safari/.test(ua)&&!/CriOS|FxiOS|EdgiOS|Chrome/.test(ua);
+  if(!ios||!safari) return;
+  if(navigator.standalone||matchMedia('(display-mode: standalone)').matches) return;
+  if(localStorage.getItem('mbx.a2hs')) return;
+  const box=$('#a2hs');
+  setTimeout(()=>box.classList.remove('hide'),1600);
+  $('#a2close').onclick=()=>{ box.classList.add('hide'); localStorage.setItem('mbx.a2hs','1'); };
+}
+maybeA2hs();
 document.addEventListener('gesturestart',e=>e.preventDefault());
 </script>
 </body>
