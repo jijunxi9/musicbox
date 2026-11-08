@@ -1,5 +1,5 @@
-const CACHE = 'mbx-shell-v4';
-const SHELL = ['./', './index.html', './manifest.webmanifest', './songs.json', './icon-180.png', './icon-192.png', './icon-512.png'];
+const CACHE = 'mbx-shell-v5';
+const SHELL = ['./', './index.html', './player.html', './dad.html', './mom.html', './manifest.webmanifest', './songs.json', './icon-180.png', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil((async () => {

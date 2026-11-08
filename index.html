@@ -177,6 +177,7 @@ main::-webkit-scrollbar{width:0}
   <header>
     <h1>音乐盒<small id="sub">载入中…</small></h1>
     <div class="hbtns">
+      <button class="ico" id="btnSearch" title="搜索全库"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="11" cy="11" r="6.4"/><path d="M15.8 15.8 20 20"/></svg></button>
       <button class="ico" id="btnShuffleAll" title="随机播放"></button>
       <button class="ico" id="btnSet" title="设置">⚙︎</button>
     </div>
@@ -591,6 +592,7 @@ $('#mLike').onclick=()=>{ const on=$('#mLike').classList.toggle('liked');
 $('#pDown').onclick=closePlayer;
 $('#pMenu').onclick=()=>sheetSettings();
 $('#btnSet').onclick=()=>sheetSettings();
+$('#btnSearch').onclick=()=>{ location.href='./player.html?u=me&n=' + encodeURIComponent('搜索听歌'); };
 $('#btnShuffleAll').onclick=()=>{ setMode('shuffle',true);
   play(Math.floor(Math.random()*state.songs.length)); openPlayer(); };
 $('#tLyric').onclick=()=>{ const box=$('#lyric'); box.classList.toggle('on'); $('#pMain').classList.toggle('hide',box.classList.contains('on'));

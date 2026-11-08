@@ -1,0 +1,586 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>我的音乐</title>
+<meta name="theme-color" content="#0a0a12">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="我的音乐">
+<meta name="format-detection" content="telephone=no">
+<link rel="apple-touch-icon" href="./icon-180.png">
+<link rel="icon" href="./icon-192.png">
+<style>
+:root{
+  --bg:#0a0a12; --card:rgba(255,255,255,.06); --line:rgba(255,255,255,.1);
+  --txt:#f2f3f7; --dim:#a2a4b6; --dim2:#71738a;
+  --acc:#6ee7d7;
+  --safeT:env(safe-area-inset-top,0px); --safeB:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+input{-webkit-user-select:text;user-select:text}
+html,body{height:100%;margin:0}
+body{background:radial-gradient(120% 70% at 50% -10%,#1c1c30,#0a0a12 62%);color:var(--txt);
+  font:17px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB",system-ui,sans-serif;
+  overflow:hidden;overscroll-behavior:none;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;touch-action:manipulation}
+.hide{display:none!important}
+#wrap{position:fixed;inset:0;display:flex;flex-direction:column}
+header{padding:calc(var(--safeT) + 16px) 18px 8px}
+header h1{margin:0 0 12px;font-size:24px;font-weight:700;letter-spacing:-.4px}
+header h1 small{display:block;font-size:13px;font-weight:400;color:var(--dim);margin-top:4px;letter-spacing:0}
+.searchbox{display:flex;gap:10px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:0 14px;height:52px}
+.searchbox input{flex:1;min-width:0;background:none;border:0;outline:none;color:#fff;font-size:17px;height:100%}
+.searchbox input::placeholder{color:var(--dim2)}
+.searchbox .clr{width:26px;height:26px;border-radius:50%;background:#ffffff1a;display:grid;place-items:center;font-size:14px;color:var(--dim)}
+.tabs{display:flex;gap:6px;margin:12px 18px 6px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:4px}
+.tabs button{flex:1;padding:10px 0;border-radius:11px;font-size:15px;color:var(--dim)}
+.tabs button.on{background:#ffffff17;color:#fff;font-weight:600}
+main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:6px 10px 170px}
+main::-webkit-scrollbar{width:0}
+.row{display:flex;align-items:center;gap:14px;padding:12px 10px;border-radius:16px}
+.row:active{background:var(--card)}
+.row .idx{width:26px;text-align:right;color:var(--dim2);font-size:15px;flex:none;font-variant-numeric:tabular-nums}
+.row .meta{min-width:0;flex:1}
+.row .t{font-size:17px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .a{font-size:14px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.row.on .t{color:var(--acc)}
+.fav{width:44px;height:44px;flex:none;display:grid;place-items:center;color:var(--dim2)}
+.fav.on{color:#ff6f91}
+.hint{padding:40px 18px;color:var(--dim2);font-size:15px;text-align:center;line-height:1.9}
+.hint b{color:var(--acc)}
+#bar{position:fixed;left:10px;right:10px;bottom:calc(var(--safeB) + 10px);height:66px;z-index:8;display:flex;align-items:center;gap:12px;
+  padding:0 14px;border-radius:20px;background:#1c1c2eef;border:1px solid var(--line);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  box-shadow:0 14px 40px #0009;transition:transform .3s}
+#bar.gone{transform:translateY(120%)}
+#bar .art{width:44px;height:44px;border-radius:12px;object-fit:cover;background:#22223a}
+#bar .m{flex:1;min-width:0}
+#bar .t{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#bar .a{font-size:12px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#bar .cbtn{width:44px;height:44px;display:grid;place-items:center;color:#fff}
+#bar .prog{position:absolute;left:14px;right:14px;bottom:6px;height:2px;background:#ffffff1f;border-radius:2px;overflow:hidden}
+#bar .prog i{display:block;height:100%;width:0;background:var(--acc)}
+#player{position:fixed;inset:0;z-index:20;display:flex;flex-direction:column;pointer-events:none;background:#0a0a12;
+  transform:translateY(100%);transition:transform .34s cubic-bezier(.2,.85,.2,1)}
+#player.up{transform:none;pointer-events:auto}
+#pbg{position:absolute;inset:-20%;background-size:cover;background-position:center;filter:blur(60px) saturate(1.3);opacity:.45;z-index:0}
+#pscrim{position:absolute;inset:0;background:linear-gradient(#0a0a1288,#0a0a12f5 55%,#0a0a12);z-index:1}
+.phead{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;padding:calc(var(--safeT) + 10px) 18px 0}
+.phead .ico{width:40px;height:40px;border-radius:13px;background:var(--card);border:1px solid var(--line);display:grid;place-items:center;font-size:18px}
+.phead .lbl{font-size:13px;color:var(--dim)}
+.pbody{position:relative;z-index:2;flex:1;display:flex;flex-direction:column;padding:0 26px;overflow:hidden;min-height:0}
+#pMain{display:flex;flex-direction:column;flex:1;min-height:0;justify-content:center}
+.cover{width:min(70vw,280px);aspect-ratio:1;border-radius:22px;margin:0 auto;object-fit:cover;background:#1a1a28;box-shadow:0 24px 60px #000a,0 0 0 1px #ffffff12}
+.ptitle{font-size:22px;font-weight:700;text-align:center;margin:22px 0 6px;padding:0 6px}
+.partist{font-size:14px;color:var(--dim);text-align:center;margin-bottom:18px;padding:0 6px}
+.seek{padding:0 2px}
+.seek .bar{position:relative;height:26px;display:flex;align-items:center}
+.seek .bar:before{content:'';position:absolute;left:0;right:0;height:4px;border-radius:3px;background:#ffffff26}
+.seek .fill{position:absolute;left:0;height:4px;border-radius:3px;background:var(--acc);width:0}
+.seek .knob{position:absolute;width:14px;height:14px;border-radius:50%;background:#fff;left:0;margin-left:-7px;box-shadow:0 2px 8px #0008}
+.times{display:flex;justify-content:space-between;font-size:12px;color:var(--dim2);margin-top:-2px}
+.ctrl{display:flex;align-items:center;justify-content:space-between;margin-top:16px}
+.ctrl .side{width:52px;height:52px;display:grid;place-items:center;color:#d8d8e6}
+.ctrl .playbig{width:76px;height:76px;border-radius:50%;background:#fff;color:#0a0a12;display:grid;place-items:center;box-shadow:0 10px 30px #0008}
+.ctrl .side.on{color:var(--acc)}
+.tools{display:flex;justify-content:space-around;margin:auto 0 0;padding:26px 0 calc(var(--safeB) + 18px);position:relative;z-index:4;
+  background:linear-gradient(180deg,#0a0a1200,#0a0a12f5 26%,#0a0a12 50%)}
+.tools button{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:12px;color:var(--dim);width:74px}
+.tools button .g{font-size:19px;color:#e6e6f0}
+.tools button.on{color:var(--acc)}
+.tools button.on .g{color:var(--acc)}
+#lyric{position:absolute;left:0;right:0;top:0;bottom:84px;padding:calc(var(--safeT) + 40px) 26px 30px;overflow-y:auto;
+  -webkit-overflow-scrolling:touch;display:none;background:#0a0a12f7;z-index:3}
+#lyric.on{display:block}
+#lyric .ln{font-size:17px;line-height:2;color:#8b8da0;padding:2px 0;transition:color .2s}
+#lyric .ln.cur{color:#fff;font-weight:600}
+#lyric .pad{height:40vh}
+#lyric .none{color:var(--dim2);font-size:14px;padding:60px 0;text-align:center}
+.hotwrap{margin-top:6px;padding:0 8px}
+.hotttl{font-size:13px;color:#71738a;margin:0 4px 10px}
+.chips{display:flex;flex-wrap:wrap;gap:9px}
+.chip{background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:13px;padding:11px 16px;font-size:15px;color:#dcdce8}
+.chip:active{transform:scale(.97)}
+#toast{position:fixed;left:50%;bottom:calc(var(--safeB) + 96px);transform:translate(-50%,20px);background:#25253a;border:1px solid var(--line);
+  color:#eef;padding:11px 18px;border-radius:14px;font-size:15px;z-index:60;opacity:0;transition:.22s;pointer-events:none;max-width:86vw;text-align:center}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+.spin{width:16px;height:16px;border:2px solid #ffffff33;border-top-color:var(--acc);border-radius:50%;animation:sp .7s linear infinite;display:inline-block;vertical-align:-3px}
+@keyframes sp{to{transform:rotate(360deg)}}
+#a2hs{position:fixed;left:14px;right:14px;bottom:calc(var(--safeB) + 90px);z-index:15;display:flex;align-items:center;gap:12px;
+  background:#1b1b2cf0;border:1px solid var(--line);border-radius:18px;padding:14px 16px;font-size:14px;line-height:1.55;
+  box-shadow:0 18px 40px #0008;transition:opacity .3s,transform .3s}
+#a2hs.hide{opacity:0;transform:translateY(20px);pointer-events:none}
+#a2hs span{color:var(--dim);font-size:13px;display:block}
+#a2hs b{color:var(--acc)}
+#a2hs button{flex:0 0 auto;background:#ffffff14;border:0;color:#cfcbe0;padding:10px 14px;border-radius:13px;font-size:14px}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <header>
+    <h1><span id="h1t">我的音乐</span><small id="sub">搜索歌名或歌手，点歌曲就能听</small></h1>
+    <div class="searchbox">
+      <input id="q" type="search" placeholder="搜歌名 / 歌手，比如 邓丽君" autocomplete="off" enterkeyhint="search" autocapitalize="off" spellcheck="false">
+      <button class="clr hide" id="qClr">✕</button>
+    </div>
+  </header>
+  <div class="tabs" id="tabs">
+    <button data-tab="search">搜索</button>
+    <button data-tab="fav">我喜欢</button>
+    <button data-tab="recent">最近听</button>
+  </div>
+  <main id="list"></main>
+</div>
+
+<div id="a2hs" class="hide">
+  <div>加到主屏幕，用起来像 App<span>点底部 <b>分享</b> → 添加到主屏幕</span></div>
+  <button id="a2close">知道了</button>
+</div>
+
+<div id="bar" class="gone">
+  <img class="art" id="barArt" alt="">
+  <div class="m"><div class="t" id="barT">—</div><div class="a" id="barA"></div></div>
+  <button class="cbtn" id="barPlay"></button>
+  <button class="cbtn" id="barNext"></button>
+  <div class="prog"><i id="barProg"></i></div>
+</div>
+
+<div id="player">
+  <div id="pbg"></div><div id="pscrim"></div>
+  <div class="phead">
+    <button class="ico" id="pDown">⌄</button>
+    <div class="lbl">正在播放</div>
+    <button class="ico" id="pFav">♡</button>
+  </div>
+  <div class="pbody">
+    <div id="pMain">
+      <img class="cover" id="pCover" alt="">
+      <div class="ptitle" id="pTitle">—</div>
+      <div class="partist" id="pArtist"></div>
+      <div class="seek">
+        <div class="bar" id="seekBar"><div class="fill" id="fill"></div><div class="knob" id="knob"></div></div>
+        <div class="times"><span id="tCur">0:00</span><span id="tDur">0:00</span></div>
+      </div>
+      <div class="ctrl">
+        <button class="side" id="mMode"></button>
+        <button class="side" id="mPrev"></button>
+        <button class="playbig" id="mPlay"></button>
+        <button class="side" id="mNext"></button>
+        <button class="side" id="mDl"></button>
+      </div>
+    </div>
+    <div id="lyric"></div>
+    <div class="tools">
+      <button id="tLyric"><span class="g">Aa</span>歌词</button>
+      <button id="tQuality"><span class="g">◍</span><span id="qLbl">320K</span></button>
+      <button id="tOffline"><span class="g">⤓</span>保存</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<audio id="audio" preload="metadata" playsinline webkit-playsinline></audio>
+
+<script>
+'use strict';
+/* ============ 命名空间：每个链接一套独立收藏/历史 ============ */
+const P = new URLSearchParams(location.search);
+const NS = (P.get('u') || 'me').replace(/[^a-z0-9_-]/gi, '').slice(0, 12) || 'me';
+const K = (k) => 'mbx.' + NS + '.' + k;
+const TITLE = P.get('n');   // 可选：自定义标题
+if (TITLE) {
+  document.title = TITLE;
+  try {
+    const m1 = document.querySelector('meta[name="apple-mobile-web-app-title"]');
+    const m2 = document.querySelector('meta[name="theme-color"]');
+    if (m1) m1.content = TITLE;
+    const h = document.getElementById('h1t'); if (h) h.textContent = TITLE;
+  } catch (e) { }
+}
+
+const API = 'https://music-api.gdstudio.xyz/api.php';
+const RELAY = [id => 'https://api.qijieya.cn/meting/?type=url&id=' + encodeURIComponent(id),
+               id => 'https://api.injahow.cn/meting/?type=url&id=' + encodeURIComponent(id)];
+const $ = (s, r = document) => r.querySelector(s);
+const a = $('#audio');
+
+const state = {
+  tab: 'search', results: [], fav: [], recent: [], queue: [], qi: -1,
+  playing: false, mode: localStorage.getItem(K('mode')) || 'order',
+  quality: +(localStorage.getItem(K('q')) || 320),
+  blobMap: {}, src: null, lyric: null, lyrIdx: -1, key: (P.get('k') || '')
+};
+try { state.fav = JSON.parse(localStorage.getItem(K('fav')) || '[]'); } catch (e) { state.fav = []; }
+try { state.recent = JSON.parse(localStorage.getItem(K('recent')) || '[]'); } catch (e) { state.recent = []; }
+
+/* ============ 图标 ============ */
+const IC = {
+  play: s => '<svg viewBox="0 0 24 24" width="' + s + '" height="' + s + '" fill="currentColor"><path d="M8.2 5.4c0-.8.9-1.3 1.6-.9l9 6.6c.6.4.6 1.4 0 1.8l-9 6.6c-.7.4-1.6-.1-1.6-.9V5.4z"/></svg>',
+  pause: s => '<svg viewBox="0 0 24 24" width="' + s + '" height="' + s + '" fill="currentColor"><rect x="6.5" y="5" width="4.1" height="14" rx="1.3"/><rect x="13.4" y="5" width="4.1" height="14" rx="1.3"/></svg>',
+  next: s => '<svg viewBox="0 0 24 24" width="' + s + '" height="' + s + '" fill="currentColor"><path d="M6 5.6c0-.8.9-1.3 1.6-.9l8.1 5.9c.6.4.6 1.4 0 1.8l-8.1 5.9c-.7.4-1.6-.1-1.6-.9V5.6z"/><rect x="16.6" y="5" width="2.2" height="14" rx="1.1"/></svg>',
+  prev: s => '<svg viewBox="0 0 24 24" width="' + s + '" height="' + s + '" fill="currentColor"><path d="M18 5.6c0-.8-.9-1.3-1.6-.9L8.3 10.6c-.6.4-.6 1.4 0 1.8l8.1 5.9c.7.4 1.6-.1 1.6-.9V5.6z"/><rect x="5.2" y="5" width="2.2" height="14" rx="1.1"/></svg>',
+  repeat: s => '<svg viewBox="0 0 24 24" width="' + s + '" height="' + s + '" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4.2 11.6A4.6 4.6 0 0 1 8.8 7h9.4"/><path d="M15.5 4.3 18.6 7.2l-3.1 2.9"/><path d="M19.8 12.4A4.6 4.6 0 0 1 15.2 17H5.8"/><path d="M8.5 19.7 5.4 16.8l3.1-2.9"/></svg>',
+  repeat1: s => '<svg viewBox="0 0 24 24" width="' + s + '" height="' + s + '" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4.2 11.6A4.6 4.6 0 0 1 8.8 7h9.4"/><path d="M15.5 4.3 18.6 7.2l-3.1 2.9"/><path d="M19.8 12.4A4.6 4.6 0 0 1 15.2 17H5.8"/><path d="M8.5 19.7 5.4 16.8l3.1-2.9"/><text x="12" y="15" font-size="8.5" stroke="none" fill="currentColor" text-anchor="middle" font-family="system-ui">1</text></svg>',
+  shuffle: s => '<svg viewBox="0 0 24 24" width="' + s + '" height="' + s + '" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h3.2c1.7 0 3.2.7 4.3 1.9l4.1 4.2c1.1 1.2 2.6 1.9 4.3 1.9H21"/><path d="M3 17h3.2c1.7 0 3.2-.7 4.3-1.9l4.1-4.2C15.7 9.7 17.2 9 18.9 9H21"/><path d="M18.3 5.9 21 8.6l-2.7 2.7"/><path d="M18.3 12.7 21 15.4l-2.7 2.7"/></svg>',
+  heart: (s, f) => '<svg viewBox="0 0 24 24" width="' + s + '" height="' + s + '" fill="' + (f ? 'currentColor' : 'none') + '" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 19.4S5.1 15.3 5.1 10.5A3.85 3.85 0 0 1 12 8.6a3.85 3.85 0 0 1 6.9 1.9c0 4.8-6.9 8.9-6.9 8.9z"/></svg>',
+  dl: s => '<svg viewBox="0 0 24 24" width="' + s + '" height="' + s + '" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v10"/><path d="M8 10.5 12 14.5l4-4"/><path d="M5 18.5h14"/></svg>',
+  ok: s => '<svg viewBox="0 0 24 24" width="' + s + '" height="' + s + '" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5 10 17.5 19 7"/></svg>'
+};
+
+/* ============ 工具 ============ */
+function toast(m, ms = 2000) { const t = $('#toast'); t.textContent = m; t.classList.add('on'); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('on'), ms); }
+function fmt(s) { s = Math.max(0, Math.floor(s || 0)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+async function jfetch(url, ms = 15000) {
+  let last = null;
+  for (let i = 0; i < 2; i++) {
+    const c = new AbortController(); const t = setTimeout(() => c.abort(), ms);
+    try { const r = await fetch(url, { signal: c.signal, headers: { Accept: 'application/json' } }); if (!r.ok) throw new Error('HTTP ' + r.status); return await r.json(); }
+    catch (e) { last = e; await new Promise(r => setTimeout(r, 300)); }
+    finally { clearTimeout(t); }
+  }
+  throw last;
+}
+const api = p => jfetch(API + '?' + new URLSearchParams(p));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+/* ============ IndexedDB（离线音频，按命名空间隔离） ============ */
+let dbp = null, DBNAME = 'musicbox_' + NS;
+function db() {
+  if (!dbp) dbp = new Promise((res, rej) => {
+    const r = indexedDB.open(DBNAME, 1);
+    r.onupgradeneeded = () => { if (!r.result.objectStoreNames.contains('audio')) r.result.createObjectStore('audio'); };
+    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+  });
+  return dbp;
+}
+const idbTx = (mode, fn) => db().then(d => new Promise((res, rej) => {
+  const tx = d.transaction('audio', mode); const out = fn(tx.objectStore('audio'));
+  tx.oncomplete = () => res(out && out.result); tx.onerror = () => rej(tx.error);
+}));
+const idbGet = k => db().then(d => new Promise((res, rej) => { const q = d.transaction('audio', 'readonly').objectStore('audio').get(k); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); }));
+const idbPut = (k, v) => db().then(d => new Promise((res, rej) => { const tx = d.transaction('audio', 'readwrite'); tx.objectStore('audio').put(v, k); tx.oncomplete = () => res(); tx.onerror = () => rej(tx.error); }));
+const idbAll = () => db().then(d => new Promise((res, rej) => { const q = d.transaction('audio', 'readonly').objectStore('audio').getAllKeys(); q.onsuccess = () => res(q.result || []); q.onerror = () => rej(q.error); }));
+
+/* ============ 音源解析 ============ */
+function fastUrl(id) {
+  try { const o = JSON.parse(localStorage.getItem(K('u.' + id + '.' + state.quality)) || 'null');
+    if (o && Date.now() - o.t < 3 * 3600e3) return o.url; } catch (e) { }
+  return null;
+}
+async function resolveUrl(track, br) {
+  const ck = K('u.' + track.id + '.' + br);
+  try { const o = JSON.parse(localStorage.getItem(ck) || 'null'); if (o && Date.now() - o.t < 3 * 3600e3) return o.url; } catch (e) { }
+  for (const b of [br, 320, 192, 128]) {
+    try { const j = await api({ types: 'url', source: 'netease', id: track.id, br: b });
+      if (j && j.url) { localStorage.setItem(ck, JSON.stringify({ url: j.url, t: Date.now() })); return j.url; } } catch (e) { }
+  }
+  const r = RELAY[0](track.id);
+  try { localStorage.setItem(ck, JSON.stringify({ url: r, t: Date.now(), relay: 1 })); } catch (e) { }
+  return r;
+}
+function picUrl(track, size = 500) {
+  if (track.pic) return track.pic;
+  if (track.picId) return 'https://p1.music.126.net/' + track.picId + '.jpg?param=' + size + 'y' + size;
+  return './icon-192.png';
+}
+async function fetchPic(track) {
+  if (track.pic || !track.picId) return;
+  try { const j = await api({ types: 'pic', source: 'netease', id: track.picId, size: 500 }); if (j && j.url) { track.pic = j.url; } } catch (e) { }
+}
+
+/* ============ 列表渲染 ============ */
+function norm(x) {
+  return { id: String(x.url_id || x.id), title: x.name || x.title || '', artist: (x.artist && x.artist.join ? x.artist.join(' / ') : (x.artist || x.artists || '')), album: x.album || '', pic: x.pic || '', picId: x.pic_id || '' };
+}
+function isFav(id) { return state.fav.some(f => f.id === id); }
+function toggleFav(track) {
+  const i = state.fav.findIndex(f => f.id === track.id);
+  if (i >= 0) { state.fav.splice(i, 1); toast('已取消收藏'); }
+  else { state.fav.unshift({ id: track.id, title: track.title, artist: track.artist, album: track.album, pic: track.pic, picId: track.picId }); toast('已加入「我喜欢」'); }
+  localStorage.setItem(K('fav'), JSON.stringify(state.fav));
+  render(); paintFav();
+}
+function paintFav() {
+  const t = state.queue[state.qi];
+  const on = t ? isFav(t.id) : false;
+  $('#pFav').innerHTML = IC.heart(20, on);
+  $('#pFav').style.color = on ? '#ff6f91' : '';
+}
+function currentList() {
+  if (state.tab === 'fav') return state.fav;
+  if (state.tab === 'recent') return state.recent;
+  return state.results;
+}
+const HOT = ['邓丽君','费玉清','张学友','刘文华','韩宝仪','李谷一','陈百强','龙飘飘'];
+function syncTabs(){ document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('on', x.dataset.tab===state.tab)); }
+function render() {
+  const box = $('#list'); const list = currentList();
+  const cur = state.queue[state.qi];
+  if (state.tab === 'search' && !list.length) {
+    box.innerHTML = '<div class="hint">在上面搜歌名或歌手<br>点一下歌曲就开始播放<br><b>点右边的心形</b>可以收藏</div>' +
+      '<div class="hotwrap"><div class="hotttl">试试这些</div><div class="chips">' +
+      HOT.map(x => '<button class="chip" data-q="' + esc(x) + '">' + esc(x) + '</button>').join('') + '</div></div>';
+    return;
+  }
+  if (state.tab === 'fav' && !list.length) {
+    box.innerHTML = '<div class="hint">还没有收藏<br>搜到喜欢的歌，点右边 <b>♡</b> 就存起来了<br>以后从这里直接听</div>'; return;
+  }
+  if (state.tab === 'recent' && !list.length) { box.innerHTML = '<div class="hint">还没有听过歌</div>'; return; }
+  box.innerHTML = list.map((t, i) =>
+    '<div class="row' + (cur && cur.id === t.id ? ' on' : '') + '" data-i="' + i + '">' +
+    '<div class="idx">' + (i + 1) + '</div>' +
+    '<div class="meta"><div class="t">' + esc(t.title) + '</div><div class="a">' + esc(t.artist) + '</div></div>' +
+    '<button class="fav' + (isFav(t.id) ? ' on' : '') + '" data-fav="' + i + '">' + IC.heart(22, isFav(t.id)) + '</button>' +
+    '</div>').join('');
+}
+$('#list').addEventListener('click', e => {
+  const qb = e.target.closest('[data-q]');
+  if (qb) { $('#q').value = qb.dataset.q; $('#qClr').classList.remove('hide'); state.tab='search'; syncTabs(); doSearch(); return; }
+  const fb = e.target.closest('[data-fav]');
+  if (fb) { const t = currentList()[+fb.dataset.fav]; if (t) toggleFav(t); return; }
+  const r = e.target.closest('.row');
+  if (r) { const i = +r.dataset.i; state.queue = currentList().slice(); state.qi = i; playQueue(i); }
+});
+
+/* ============ 搜索 ============ */
+let searchTimer = null;
+async function doSearch() {
+  const q = $('#q').value.trim();
+  if (!q) { state.results = []; render(); return; }
+  $('#list').innerHTML = '<div class="hint"><span class="spin"></span> 搜索中…</div>';
+  try {
+    const res = await api({ types: 'search', source: 'netease', name: q, count: 40 });
+    state.results = (Array.isArray(res) ? res : []).map(norm).filter(t => t.id);
+    render();
+  } catch (e) {
+    $('#list').innerHTML = '<div class="hint">搜索失败，检查一下网络再试</div>';
+  }
+}
+$('#q').addEventListener('input', () => {
+  $('#qClr').classList.toggle('hide', !$('#q').value);
+  clearTimeout(searchTimer); searchTimer = setTimeout(doSearch, 520);
+});
+$('#q').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('#q').blur(); clearTimeout(searchTimer); doSearch(); } });
+$('#qClr').onclick = () => { $('#q').value = ''; $('#qClr').classList.add('hide'); state.results = []; render(); $('#q').focus(); };
+
+/* ============ 标签切换 ============ */
+$('#tabs').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  state.tab = b.dataset.tab; syncTabs();
+  render();
+});
+
+/* ============ 播放 ============ */
+function setPlayIcon(p) { $('#mPlay').innerHTML = IC[p ? 'pause' : 'play'](30); $('#barPlay').innerHTML = IC[p ? 'pause' : 'play'](22); $('#mPlay').style.paddingLeft = p ? '0' : '3px'; }
+function setModeIcon() {
+  const m = state.mode;
+  $('#mMode').innerHTML = (m === 'shuffle' ? IC.shuffle(24) : m === 'one' ? IC.repeat1(24) : IC.repeat(24));
+  $('#mMode').classList.toggle('on', m !== 'order');
+}
+function setPlaying(p) { state.playing = p; setPlayIcon(p); document.querySelectorAll('#bar').forEach(x => x.classList.toggle('paused', !p)); }
+function renderNow(t) {
+  $('#barT').textContent = t.title; $('#barA').textContent = t.artist;
+  $('#pTitle').textContent = t.title; $('#pArtist').textContent = t.artist + (t.album ? ' · ' + t.album : '');
+  $('#barArt').src = picUrl(t, 120); $('#pCover').src = picUrl(t, 700);
+  $('#pbg').style.backgroundImage = 'url("' + picUrl(t, 300) + '")';
+  $('#bar').classList.remove('gone');
+  paintFav(); render();
+  fetchPic(t).then(() => { $('#barArt').src = picUrl(t, 120); $('#pCover').src = picUrl(t, 700); $('#pbg').style.backgroundImage = 'url("' + picUrl(t, 300) + '")'; });
+}
+function pushRecent(t) {
+  state.recent = state.recent.filter(x => x.id !== t.id);
+  state.recent.unshift({ id: t.id, title: t.title, artist: t.artist, album: t.album, pic: t.pic, picId: t.picId });
+  state.recent = state.recent.slice(0, 60);
+  localStorage.setItem(K('recent'), JSON.stringify(state.recent));
+}
+function setMedia(t) {
+  if (!navigator.mediaSession) return;
+  try {
+    navigator.mediaSession.metadata = new MediaMetadata({ title: t.title, artist: t.artist, album: t.album || '', artwork: [{ src: picUrl(t, 512), sizes: '512x512', type: 'image/jpeg' }] });
+    navigator.mediaSession.setActionHandler('play', () => a.play());
+    navigator.mediaSession.setActionHandler('pause', () => a.pause());
+    navigator.mediaSession.setActionHandler('nexttrack', () => next());
+    navigator.mediaSession.setActionHandler('previoustrack', () => prev());
+  } catch (e) { }
+}
+function startTrack(t, src) {
+  if (state.src !== src) { a.src = src; state.src = src; }
+  const p = a.play();
+  if (p && p.catch) p.catch(err => {
+    setPlaying(false);
+    toast(err && err.name === 'NotAllowedError' ? '再点一下播放键开始' : '点播放键继续', 2400);
+  });
+  loadLyric(t); setMedia(t); prewarm(t); pushRecent(t);
+}
+function prewarm(t) {
+  const i = state.queue.findIndex(x => x.id === t.id); if (i < 0) return;
+  [i + 1, i - 1].forEach(k => {
+    const s = state.queue[(k + state.queue.length) % state.queue.length];
+    if (!s || s.id === t.id || state.blobMap[s.id] || fastUrl(s.id)) return;
+    resolveUrl(s, state.quality).catch(() => { });
+  });
+}
+async function playQueue(i) {
+  const t = state.queue[i]; if (!t) return;
+  state.qi = i; state.playing = false; renderNow(t);
+  a.pause();
+  const bu = state.blobMap[t.id];
+  if (bu) { startTrack(t, bu); return; }
+  const fu = fastUrl(t.id);
+  if (fu) { startTrack(t, fu); return; }
+  const blob = await idbGet(t.id).catch(() => null);
+  if (blob) { state.blobMap[t.id] = URL.createObjectURL(blob); startTrack(t, state.blobMap[t.id]); return; }
+  const src = await resolveUrl(t, state.quality);
+  startTrack(t, src);
+}
+function next() {
+  if (!state.queue.length) return;
+  let i = state.qi;
+  if (state.mode === 'shuffle') { do { i = Math.floor(Math.random() * state.queue.length); } while (state.queue.length > 2 && i === state.qi); }
+  else i = (i + 1) % state.queue.length;
+  playQueue(i);
+}
+function prev() {
+  if (a.currentTime > 4) { a.currentTime = 0; return; }
+  if (!state.queue.length) return;
+  playQueue((state.qi - 1 + state.queue.length) % state.queue.length);
+}
+a.addEventListener('play', () => setPlaying(true));
+a.addEventListener('pause', () => setPlaying(false));
+a.addEventListener('error', () => {
+  const t = state.queue[state.qi]; if (!t || !a.src || a.src !== state.src) return;
+  setPlaying(false);
+  try { localStorage.removeItem(K('u.' + t.id + '.' + state.quality)); } catch (e) { }
+  state.src = null;
+  toast('链接过期，正在重连…', 2000);
+  setTimeout(() => playQueue(state.qi), 800);
+});
+a.addEventListener('timeupdate', () => {
+  const d = a.duration || 0, c = a.currentTime || 0, pct = d ? c / d * 100 : 0;
+  $('#fill').style.width = pct + '%'; $('#knob').style.left = pct + '%'; $('#barProg').style.width = pct + '%';
+  $('#tCur').textContent = fmt(c); $('#tDur').textContent = fmt(d);
+  syncLyric(c);
+});
+a.addEventListener('ended', () => { if (state.mode === 'one') { a.currentTime = 0; a.play(); } else next(); });
+
+/* ============ 进度条 ============ */
+(function () {
+  const bar = $('#seekBar'); let drag = false, p = 0;
+  const set = x => {
+    const r = bar.getBoundingClientRect(); p = Math.min(1, Math.max(0, (x - r.left) / r.width));
+    $('#fill').style.width = p * 100 + '%'; $('#knob').style.left = p * 100 + '%';
+    if (a.duration) $('#tCur').textContent = fmt(p * a.duration);
+    return p;
+  };
+  bar.addEventListener('pointerdown', e => { drag = true; try { bar.setPointerCapture(e.pointerId); } catch (x) { } p = set(e.clientX); });
+  bar.addEventListener('pointermove', e => { if (drag) p = set(e.clientX); });
+  bar.addEventListener('pointerup', e => { if (!drag) return; drag = false; set(e.clientX); if (a.duration) a.currentTime = p * a.duration; });
+})();
+
+/* ============ 歌词 ============ */
+function parseLrc(txt) {
+  const out = []; if (!txt) return out;
+  txt.split(/\r?\n/).forEach(line => {
+    const tags = [...line.matchAll(/\[(\d{1,2}):(\d{1,2})(?:[.:](\d{1,3}))?\]/g)];
+    const text = line.replace(/\[[^\]]*\]/g, '').trim();
+    if (!tags.length || !text) return;
+    tags.forEach(t => out.push({ t: (+t[1]) * 60 + (+t[2]) + (t[3] ? +('0.' + t[3]) : 0), s: text }));
+  });
+  return out.sort((x, y) => x.t - y.t);
+}
+async function loadLyric(t) {
+  const box = $('#lyric');
+  box.innerHTML = '<div class="none"><span class="spin"></span> 歌词加载中</div>';
+  state.lyric = null; state.lyrIdx = -1;
+  try {
+    const j = await api({ types: 'lyric', source: 'netease', id: t.id });
+    const lines = parseLrc(j && j.lyric);
+    if (!lines.length) { box.innerHTML = '<div class="none">这首歌暂时没有歌词</div>'; return; }
+    state.lyric = lines;
+    box.innerHTML = '<div class="pad"></div>' + lines.map((l, i) => '<div class="ln" data-i="' + i + '">' + esc(l.s) + '</div>').join('') + '<div class="pad"></div>';
+  } catch (e) { box.innerHTML = '<div class="none">歌词加载失败</div>'; }
+}
+function syncLyric(cur) {
+  if (!state.lyric || !state.lyric.length) return;
+  let i = -1; for (let k = 0; k < state.lyric.length; k++) { if (state.lyric[k].t <= cur + 0.25) i = k; else break; }
+  if (i === state.lyrIdx) return; state.lyrIdx = i;
+  document.querySelectorAll('#lyric .ln').forEach(n => n.classList.remove('cur'));
+  const node = document.querySelector('#lyric .ln[data-i="' + i + '"]');
+  if (node) { node.classList.add('cur');
+    if ($('#lyric').classList.contains('on')) { const box = $('#lyric'); box.scrollTo({ top: Math.max(0, node.offsetTop - box.clientHeight * 0.42), behavior: 'smooth' }); } }
+}
+
+/* ============ 交互 ============ */
+$('#barPlay').onclick = () => { if (state.qi < 0) return; a.paused ? a.play() : a.pause(); };
+$('#barNext').onclick = () => next();
+$('#bar').addEventListener('click', e => { if (e.target.closest('button')) return; $('#player').classList.add('up'); });
+$('#mPlay').onclick = () => { a.paused ? a.play() : a.pause(); };
+$('#mNext').onclick = () => next();
+$('#mPrev').onclick = () => prev();
+$('#pDown').onclick = () => { $('#player').classList.remove('up'); $('#lyric').classList.remove('on'); $('#pMain').classList.remove('hide'); $('#tLyric').classList.remove('on'); };
+$('#pFav').onclick = () => { const t = state.queue[state.qi]; if (t) toggleFav(t); };
+$('#mMode').onclick = () => { const seq = ['order', 'one', 'shuffle']; state.mode = seq[(seq.indexOf(state.mode) + 1) % 3]; localStorage.setItem(K('mode'), state.mode); setModeIcon(); toast('播放模式：' + ({ order: '顺序', one: '单曲循环', shuffle: '随机' })[state.mode], 1300); };
+$('#tLyric').onclick = () => { const on = $('#lyric').classList.toggle('on'); $('#pMain').classList.toggle('hide', on); $('#tLyric').classList.toggle('on', on); if (on) { state.lyrIdx = -2; syncLyric(a.currentTime); } };
+$('#tQuality').onclick = () => { const qs = [128, 192, 320]; state.quality = qs[(qs.indexOf(state.quality) + 1) % 3]; localStorage.setItem(K('q'), state.quality); $('#qLbl').textContent = state.quality + 'K'; toast('音质 ' + state.quality + 'K，下一首生效', 1600); };
+
+/* 保存到本机（离线） */
+async function saveOne(t) {
+  if (!t) return;
+  if (state.blobMap[t.id] || await idbGet(t.id).catch(() => null)) { toast('这首已经保存过了'); return; }
+  toast('正在保存…', 8000);
+  const url = await resolveUrl(t, state.quality);
+  const r = await fetch(url);
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  const blob = await r.blob();
+  if (blob.size < 20000) throw new Error('文件异常');
+  await idbPut(t.id, blob);
+  toast('已保存到本机，没网也能听');
+}
+$('#mDl').onclick = async () => {
+  const t = state.queue[state.qi];
+  if (!t) return;
+  $('#mDl').innerHTML = IC.ok(24);
+  try { await saveOne(t); } catch (e) { toast('保存失败，稍后再试'); $('#mDl').innerHTML = IC.dl(24); }
+};
+$('#tOffline').onclick = async () => {
+  const t = state.queue[state.qi];
+  if (!t) { toast('先点一首歌'); return; }
+  if (!$('#lyric').classList.contains('on')) { /* 保持在播放页 */ }
+  try { await saveOne(t); } catch (e) { toast('保存失败：' + e.message); }
+};
+
+/* ============ 启动 ============ */
+$('#qLbl').textContent = state.quality + 'K';
+$('#barPlay').innerHTML = IC.play(22);
+$('#barNext').innerHTML = IC.next(22);
+$('#mPrev').innerHTML = IC.prev(26);
+$('#mNext').innerHTML = IC.next(26);
+$('#mDl').innerHTML = IC.dl(24);
+$('#mPlay').innerHTML = IC.play(30);
+setModeIcon();
+render();
+
+// 主站跳转带过来的搜索词
+if (state.key) { $('#q').value = state.key; $('#qClr').classList.remove('hide'); doSearch(); }
+
+if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('./sw.js').catch(() => { });
+
+// iOS 添加到主屏幕提示
+(function () {
+  const ua = navigator.userAgent;
+  const ios = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const safari = /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS|Chrome/.test(ua);
+  if (!ios || !safari) return;
+  if (navigator.standalone || matchMedia('(display-mode: standalone)').matches) return;
+  if (localStorage.getItem('mbx.a2hs')) return;
+  const box = $('#a2hs');
+  setTimeout(() => box.classList.remove('hide'), 1600);
+  setTimeout(() => box.classList.add('hide'), 15000);
+  $('#a2close').onclick = () => { box.classList.add('hide'); localStorage.setItem('mbx.a2hs', '1'); };
+})();
+</script>
+</body>
+</html>
